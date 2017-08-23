@@ -20,6 +20,8 @@ import (
 	"runtime"
 	"strings"
 
+	"xperience/soong/android"
+
 	"github.com/google/blueprint/proptools"
 )
 
@@ -152,6 +154,10 @@ type variableProperties struct {
 		Device_support_hwfde_perf struct {
 			Cflags []string
 		}
+
+		// include XPerience variables
+		Xperience android.Product_variables
+
 	} `android:"arch_variant"`
 }
 
@@ -319,6 +325,9 @@ type productVariables struct {
 	ProductHiddenAPIStubsTest   []string `json:",omitempty"`
 
 	TargetFSConfigGen []string `json:",omitempty"`
+
+	// include XPerience variables
+	Xperience android.ProductVariables
 }
 
 func boolPtr(v bool) *bool {
