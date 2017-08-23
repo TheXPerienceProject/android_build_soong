@@ -20,6 +20,8 @@ import (
 	"runtime"
 	"strings"
 
+	"xperience/soong/android"
+
 	"github.com/google/blueprint/proptools"
 )
 
@@ -117,6 +119,9 @@ type variableProperties struct {
 			Static_libs  []string
 			Srcs         []string
 		}
+
+		// include xperience variables
+		Xperience android.Product_variables
 
 		Flatten_apex struct {
 			Enabled *bool
@@ -336,6 +341,9 @@ type productVariables struct {
 	InstallExtraFlattenedApexes *bool `json:",omitempty"`
 
 	BoardUsesRecoveryAsBoot *bool `json:",omitempty"`
+
+	// include XPerience variables
+	Xperience android.ProductVariables
 }
 
 func boolPtr(v bool) *bool {
