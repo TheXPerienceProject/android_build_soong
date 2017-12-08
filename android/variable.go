@@ -97,8 +97,8 @@ type variableProperties struct {
 			Enabled *bool
 		}
 
-		// include xperience variables
-		*android.Product_variables
+		// include XPerience variables
+		XPerience android.Product_variables
 	} `android:"arch_variant"`
 }
 
@@ -173,8 +173,8 @@ type productVariables struct {
 
 	DeviceKernelHeaders []string `json:",omitempty"`
 
-	// include xperience variables
-	*android.ProductVariables
+	// include XPerience variables
+	XPerience android.ProductVariables
 }
 
 func boolPtr(v bool) *bool {
