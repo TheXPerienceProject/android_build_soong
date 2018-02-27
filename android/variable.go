@@ -174,7 +174,7 @@ type productVariables struct {
 	DeviceKernelHeaders []string `json:",omitempty"`
 
 	// include XPerience variables
-	XPerience android.ProductVariables
+	Xperience android.ProductVariables
 }
 
 func boolPtr(v bool) *bool {
