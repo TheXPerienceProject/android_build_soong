@@ -50,7 +50,7 @@ func runNinja(ctx Context, config Config) {
 	if config.IsVerbose() {
 		args = append(args, "-v")
 	}
-	args = append(args, "-w", "dupbuild=err")
+	//args = append(args, "-w", "dupbuild=err")
 
 	cmd := Command(ctx, config, "ninja", executable, args...)
 	if config.HasKatiSuffix() {
