@@ -114,10 +114,6 @@ type variableProperties struct {
 			Static_libs  []string
 			Srcs         []string
 		}
-
-		Needs_text_relocations struct {
-			Cppflags []string
-		}
 	} `android:"arch_variant"`
 }
 
@@ -234,8 +230,6 @@ type productVariables struct {
 	PgoAdditionalProfileDirs []string `json:",omitempty"`
 
 	VendorVars map[string]map[string]string `json:",omitempty"`
-
-	Needs_text_relocations *bool `json:",omitempty"`
 }
 
 func boolPtr(v bool) *bool {
