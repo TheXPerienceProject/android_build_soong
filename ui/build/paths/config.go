@@ -98,6 +98,7 @@ var Configuration = map[string]PathConfig{
 	"llvm-ar": Allowed,
 	"nproc":   Allowed,
 	"openssl": Allowed,
+	"printf":  Log,
 	"patch":   Allowed,
 	"pkg-config": Allowed,
 	"pstree":  Allowed,
@@ -115,6 +116,12 @@ var Configuration = map[string]PathConfig{
 	"zip":     Allowed,
 	"arm-linux-androidkernel-as": Allowed,
 	"arm-linux-androidkernel-ld": Allowed,
+	"aarch64-linux-android-ar":      Log,
+	"aarch64-linux-android-gcc":     Log,
+	"aarch64-linux-android-ld":      Log,
+	"aarch64-linux-android-nm":      Log,
+	"aarch64-linux-android-objcopy": Log,
+	"aarch64-linux-android-objdump": Log,
 
 	// Host toolchain is removed. In-tree toolchain should be used instead.
 	// GCC also can't find cc1 with this implementation.
