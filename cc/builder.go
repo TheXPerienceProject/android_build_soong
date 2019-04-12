@@ -69,6 +69,8 @@ var (
 			CommandDeps:    []string{"$ldCmd"},
 			Rspfile:        "${out}.rsp",
 			RspfileContent: "${in}",
+			// clang -Wl,--out-implib doesn't update its output file if it hasn't changed.
+			Restat: true,
 		},
 		"ldCmd", "crtBegin", "libFlags", "crtEnd", "ldFlags")
 
@@ -258,13 +260,9 @@ type builderFlags struct {
 	stripAddGnuDebuglink   bool
 	stripUseGnuStrip       bool
 
-	protoDeps        android.Paths
-	protoFlags       string
-	protoOutTypeFlag string
-	protoOutParams   string
+	proto            android.ProtoFlags
 	protoC           bool
 	protoOptionsFile bool
-	protoRoot        bool
 }
 
 type Objects struct {

@@ -89,7 +89,13 @@ func stubFlagsRule(ctx android.SingletonContext) {
 	// Public API stubs
 	publicStubModules := []string{
 		"android_stubs_current",
-		"android.test.base.stubs",
+	}
+
+	// Add the android.test.base to the set of stubs only if the android.test.base module is on
+	// the boot jars list as the runtime will only enforce hiddenapi access against modules on
+	// that list.
+	if inList("android.test.base", ctx.Config().BootJars()) {
+		publicStubModules = append(publicStubModules, "android.test.base.stubs")
 	}
 
 	// System API stubs
@@ -153,9 +159,9 @@ func stubFlagsRule(ctx android.SingletonContext) {
 	for moduleList, pathList := range moduleListToPathList {
 		for i := range pathList {
 			if pathList[i] == nil {
+				pathList[i] = android.PathForOutput(ctx, "missing")
 				if ctx.Config().AllowMissingDependencies() {
 					missingDeps = append(missingDeps, (*moduleList)[i])
-					pathList[i] = android.PathForOutput(ctx, "missing")
 				} else {
 					ctx.Errorf("failed to find dex jar path for module %q",
 						(*moduleList)[i])
@@ -177,8 +183,8 @@ func stubFlagsRule(ctx android.SingletonContext) {
 		Text("list").
 		FlagForEachInput("--boot-dex=", bootDexJars).
 		FlagWithInputList("--public-stub-classpath=", publicStubPaths, ":").
-		FlagWithInputList("--public-stub-classpath=", systemStubPaths, ":").
-		FlagWithInputList("--public-stub-classpath=", testStubPaths, ":").
+		FlagWithInputList("--system-stub-classpath=", systemStubPaths, ":").
+		FlagWithInputList("--test-stub-classpath=", testStubPaths, ":").
 		FlagWithInputList("--core-platform-stub-classpath=", corePlatformStubPaths, ":").
 		FlagWithOutput("--out-api-flags=", tempPath)
 
@@ -230,6 +236,8 @@ func flagsRule(ctx android.SingletonContext) android.Path {
 			android.PathForSource(ctx, "frameworks/base/config/hiddenapi-greylist-max-o.txt")).
 		FlagWithInput("--blacklist ",
 			android.PathForSource(ctx, "frameworks/base/config/hiddenapi-force-blacklist.txt")).
+		FlagWithInput("--greylist-packages ",
+			android.PathForSource(ctx, "frameworks/base/config/hiddenapi-greylist-packages.txt")).
 		FlagWithOutput("--output ", tempPath)
 
 	commitChangeForRestat(rule, tempPath, outputPath)

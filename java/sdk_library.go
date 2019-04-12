@@ -454,8 +454,9 @@ func (module *SdkLibrary) createDocs(mctx android.TopDownMutatorContext, apiScop
 		Merge_annotations_dirs           []string
 		Merge_inclusion_annotations_dirs []string
 		Check_api                        struct {
-			Current       ApiToCheck
-			Last_released ApiToCheck
+			Current                   ApiToCheck
+			Last_released             ApiToCheck
+			Ignore_missing_latest_api *bool
 		}
 		Aidl struct {
 			Include_dirs       []string
@@ -524,6 +525,7 @@ func (module *SdkLibrary) createDocs(mctx android.TopDownMutatorContext, apiScop
 		module.latestApiFilegroupName(apiScope))
 	props.Check_api.Last_released.Removed_api_file = proptools.StringPtr(
 		module.latestRemovedApiFilegroupName(apiScope))
+	props.Check_api.Ignore_missing_latest_api = proptools.BoolPtr(true)
 	props.Srcs_lib = module.sdkLibraryProperties.Srcs_lib
 	props.Srcs_lib_whitelist_dirs = module.sdkLibraryProperties.Srcs_lib_whitelist_dirs
 	props.Srcs_lib_whitelist_pkgs = module.sdkLibraryProperties.Srcs_lib_whitelist_pkgs
@@ -607,6 +609,10 @@ func (module *SdkLibrary) PrebuiltJars(ctx android.BaseContext, sdkVersion strin
 	dir := filepath.Join("prebuilts", "sdk", v, api)
 	jar := filepath.Join(dir, module.BaseModuleName()+".jar")
 	jarPath := android.ExistentPathForSource(ctx, jar)
+	if !jarPath.Valid() {
+		ctx.PropertyErrorf("sdk_library", "invalid sdk version %q, %q does not exist", v, jar)
+		return nil
+	}
 	return android.Paths{jarPath.Path()}
 }
 
@@ -662,13 +668,41 @@ func SdkLibraryMutator(mctx android.TopDownMutatorContext) {
 }
 
 func (module *SdkLibrary) createInternalModules(mctx android.TopDownMutatorContext) {
-	if module.Library.Module.properties.Srcs == nil {
+	if len(module.Library.Module.properties.Srcs) == 0 {
 		mctx.PropertyErrorf("srcs", "java_sdk_library must specify srcs")
 	}
 
-	if module.sdkLibraryProperties.Api_packages == nil {
+	if len(module.sdkLibraryProperties.Api_packages) == 0 {
 		mctx.PropertyErrorf("api_packages", "java_sdk_library must specify api_packages")
 	}
+
+	missing_current_api := false
+
+	for _, scope := range []string{"", "system-", "test-"} {
+		for _, api := range []string{"current.txt", "removed.txt"} {
+			path := path.Join(mctx.ModuleDir(), "api", scope+api)
+			p := android.ExistentPathForSource(mctx, path)
+			if !p.Valid() {
+				mctx.ModuleErrorf("Current api file %#v doesn't exist", path)
+				missing_current_api = true
+			}
+		}
+	}
+
+	if missing_current_api {
+		script := "build/soong/scripts/gen-java-current-api-files.sh"
+		p := android.ExistentPathForSource(mctx, script)
+
+		if !p.Valid() {
+			panic(fmt.Sprintf("script file %s doesn't exist", script))
+		}
+
+		mctx.ModuleErrorf("One or more current api files are missing. "+
+			"You can update them by:\n"+
+			"%s %q && m update-api", script, mctx.ModuleDir())
+		return
+	}
+
 	// for public API stubs
 	module.createStubsLibrary(mctx, apiScopePublic)
 	module.createDocs(mctx, apiScopePublic)

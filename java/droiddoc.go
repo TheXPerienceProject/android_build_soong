@@ -157,7 +157,7 @@ var (
 type JavadocProperties struct {
 	// list of source files used to compile the Java module.  May be .java, .logtags, .proto,
 	// or .aidl files.
-	Srcs []string `android:"arch_variant"`
+	Srcs []string `android:"path,arch_variant"`
 
 	// list of directories rooted at the Android.bp file that will
 	// be added to the search paths for finding source files when passing package names.
@@ -166,7 +166,7 @@ type JavadocProperties struct {
 	// list of source files that should not be used to build the Java module.
 	// This is most useful in the arch/multilib variants to remove non-common files
 	// filegroup or genrule can be included within this property.
-	Exclude_srcs []string `android:"arch_variant"`
+	Exclude_srcs []string `android:"path,arch_variant"`
 
 	// list of java libraries that will be in the classpath.
 	Libs []string `android:"arch_variant"`
@@ -205,7 +205,7 @@ type JavadocProperties struct {
 	Java_version *string
 
 	// local files that are used within user customized droiddoc options.
-	Arg_files []string
+	Arg_files []string `android:"path"`
 
 	// user customized droiddoc args.
 	// Available variables for substitution:
@@ -220,12 +220,12 @@ type JavadocProperties struct {
 type ApiToCheck struct {
 	// path to the API txt file that the new API extracted from source code is checked
 	// against. The path can be local to the module or from other module (via :module syntax).
-	Api_file *string
+	Api_file *string `android:"path"`
 
 	// path to the API txt file that the new @removed API extractd from source code is
 	// checked against. The path can be local to the module or from other module (via
 	// :module syntax).
-	Removed_api_file *string
+	Removed_api_file *string `android:"path"`
 
 	// Arguments to the apicheck tool.
 	Args *string
@@ -243,11 +243,11 @@ type DroiddocProperties struct {
 
 	// proofread file contains all of the text content of the javadocs concatenated into one file,
 	// suitable for spell-checking and other goodness.
-	Proofread_file *string
+	Proofread_file *string `android:"path"`
 
 	// a todo file lists the program elements that are missing documentation.
 	// At some point, this might be improved to show more warnings.
-	Todo_file *string
+	Todo_file *string `android:"path"`
 
 	// directory under current module source that provide additional resources (images).
 	Resourcesdir *string
@@ -260,14 +260,14 @@ type DroiddocProperties struct {
 	Write_sdk_values *bool
 
 	// index.html under current module will be copied to docs out dir, if not null.
-	Static_doc_index_redirect *string
+	Static_doc_index_redirect *string `android:"path"`
 
 	// source.properties under current module will be copied to docs out dir, if not null.
-	Static_doc_properties *string
+	Static_doc_properties *string `android:"path"`
 
 	// a list of files under current module source dir which contains known tags in Java sources.
 	// filegroup or genrule can be included within this property.
-	Knowntags []string
+	Knowntags []string `android:"path"`
 
 	// the tag name used to distinguish if the API files belong to public/system/test.
 	Api_tag_name *string
@@ -307,6 +307,10 @@ type DroiddocProperties struct {
 		Last_released ApiToCheck
 
 		Current ApiToCheck
+
+		// do not perform API check against Last_released, in the case that both two specified API
+		// files by Last_released are modules which don't exist.
+		Ignore_missing_latest_api *bool `blueprint:"mutated"`
 	}
 
 	// if set to true, generate docs through Dokka instead of Doclava.
@@ -349,10 +353,14 @@ type DroidstubsProperties struct {
 		Last_released ApiToCheck
 
 		Current ApiToCheck
+
+		// do not perform API check against Last_released, in the case that both two specified API
+		// files by Last_released are modules which don't exist.
+		Ignore_missing_latest_api *bool `blueprint:"mutated"`
 	}
 
 	// user can specify the version of previous released API file in order to do compatibility check.
-	Previous_api *string
+	Previous_api *string `android:"path"`
 
 	// is set to true, Metalava will allow framework SDK to contain annotations.
 	Annotations_enabled *bool
@@ -425,6 +433,25 @@ func apiCheckEnabled(apiToCheck ApiToCheck, apiVersionTag string) bool {
 	}
 
 	return false
+}
+
+func ignoreMissingModules(ctx android.BottomUpMutatorContext, apiToCheck *ApiToCheck) {
+	api_file := String(apiToCheck.Api_file)
+	removed_api_file := String(apiToCheck.Removed_api_file)
+
+	api_module := android.SrcIsModule(api_file)
+	removed_api_module := android.SrcIsModule(removed_api_file)
+
+	if api_module == "" || removed_api_module == "" {
+		return
+	}
+
+	if ctx.OtherModuleExists(api_module) || ctx.OtherModuleExists(removed_api_module) {
+		return
+	}
+
+	apiToCheck.Api_file = nil
+	apiToCheck.Removed_api_file = nil
 }
 
 type ApiFilePath interface {
@@ -529,14 +556,6 @@ func (j *Javadoc) addDeps(ctx android.BottomUpMutatorContext) {
 	if j.properties.Srcs_lib != nil {
 		ctx.AddVariationDependencies(nil, srcsLibTag, *j.properties.Srcs_lib)
 	}
-
-	android.ExtractSourcesDeps(ctx, j.properties.Srcs)
-
-	// exclude_srcs may contain filegroup or genrule.
-	android.ExtractSourcesDeps(ctx, j.properties.Exclude_srcs)
-
-	// arg_files may contains filegroup or genrule.
-	android.ExtractSourcesDeps(ctx, j.properties.Arg_files)
 }
 
 func (j *Javadoc) genWhitelistPathPrefixes(whitelistPathPrefixes map[string]bool) {
@@ -677,7 +696,7 @@ func (j *Javadoc) collectDeps(ctx android.ModuleContext) deps {
 	})
 	// do not pass exclude_srcs directly when expanding srcFiles since exclude_srcs
 	// may contain filegroup or genrule.
-	srcFiles := ctx.ExpandSources(j.properties.Srcs, j.properties.Exclude_srcs)
+	srcFiles := android.PathsForModuleSrcExcludes(ctx, j.properties.Srcs, j.properties.Exclude_srcs)
 	flags := j.collectAidlFlags(ctx, deps)
 	srcFiles = j.genSources(ctx, srcFiles, flags)
 
@@ -696,12 +715,12 @@ func (j *Javadoc) collectDeps(ctx android.ModuleContext) deps {
 	}
 	j.sourcepaths = android.PathsForModuleSrc(ctx, j.properties.Local_sourcepaths)
 
-	j.argFiles = ctx.ExpandSources(j.properties.Arg_files, nil)
+	j.argFiles = android.PathsForModuleSrc(ctx, j.properties.Arg_files)
 	argFilesMap := map[string]string{}
 	argFileLabels := []string{}
 
 	for _, label := range j.properties.Arg_files {
-		var paths = ctx.ExpandSources([]string{label}, nil)
+		var paths = android.PathsForModuleSrc(ctx, []string{label})
 		if _, exists := argFilesMap[label]; !exists {
 			argFilesMap[label] = strings.Join(paths.Strings(), " ")
 			argFileLabels = append(argFileLabels, label)
@@ -839,29 +858,12 @@ func (d *Droiddoc) ApiFilePath() android.Path {
 func (d *Droiddoc) DepsMutator(ctx android.BottomUpMutatorContext) {
 	d.Javadoc.addDeps(ctx)
 
+	if Bool(d.properties.Check_api.Ignore_missing_latest_api) {
+		ignoreMissingModules(ctx, &d.properties.Check_api.Last_released)
+	}
+
 	if String(d.properties.Custom_template) != "" {
 		ctx.AddDependency(ctx.Module(), droiddocTemplateTag, String(d.properties.Custom_template))
-	}
-
-	// knowntags may contain filegroup or genrule.
-	android.ExtractSourcesDeps(ctx, d.properties.Knowntags)
-
-	if String(d.properties.Static_doc_index_redirect) != "" {
-		android.ExtractSourceDeps(ctx, d.properties.Static_doc_index_redirect)
-	}
-
-	if String(d.properties.Static_doc_properties) != "" {
-		android.ExtractSourceDeps(ctx, d.properties.Static_doc_properties)
-	}
-
-	if apiCheckEnabled(d.properties.Check_api.Current, "current") {
-		android.ExtractSourceDeps(ctx, d.properties.Check_api.Current.Api_file)
-		android.ExtractSourceDeps(ctx, d.properties.Check_api.Current.Removed_api_file)
-	}
-
-	if apiCheckEnabled(d.properties.Check_api.Last_released, "last_released") {
-		android.ExtractSourceDeps(ctx, d.properties.Check_api.Last_released.Api_file)
-		android.ExtractSourceDeps(ctx, d.properties.Check_api.Last_released.Removed_api_file)
 	}
 }
 
@@ -933,22 +935,22 @@ func (d *Droiddoc) collectDoclavaDocsFlags(ctx android.ModuleContext, implicits 
 	})
 
 	if len(d.properties.Html_dirs) > 0 {
-		htmlDir := android.PathForModuleSrc(ctx, d.properties.Html_dirs[0])
-		*implicits = append(*implicits, ctx.Glob(htmlDir.Join(ctx, "**/*").String(), nil)...)
-		args = args + " -htmldir " + htmlDir.String()
+		htmlDir := d.properties.Html_dirs[0]
+		*implicits = append(*implicits, android.PathsForModuleSrc(ctx, []string{filepath.Join(d.properties.Html_dirs[0], "**/*")})...)
+		args = args + " -htmldir " + htmlDir
 	}
 
 	if len(d.properties.Html_dirs) > 1 {
-		htmlDir2 := android.PathForModuleSrc(ctx, d.properties.Html_dirs[1])
-		*implicits = append(*implicits, ctx.Glob(htmlDir2.Join(ctx, "**/*").String(), nil)...)
-		args = args + " -htmldir2 " + htmlDir2.String()
+		htmlDir2 := d.properties.Html_dirs[1]
+		*implicits = append(*implicits, android.PathsForModuleSrc(ctx, []string{filepath.Join(htmlDir2, "**/*")})...)
+		args = args + " -htmldir2 " + htmlDir2
 	}
 
 	if len(d.properties.Html_dirs) > 2 {
 		ctx.PropertyErrorf("html_dirs", "Droiddoc only supports up to 2 html dirs")
 	}
 
-	knownTags := ctx.ExpandSources(d.properties.Knowntags, nil)
+	knownTags := android.PathsForModuleSrc(ctx, d.properties.Knowntags)
 	*implicits = append(*implicits, knownTags...)
 
 	for _, kt := range knownTags {
@@ -1283,18 +1285,8 @@ func (d *Droidstubs) ApiFilePath() android.Path {
 func (d *Droidstubs) DepsMutator(ctx android.BottomUpMutatorContext) {
 	d.Javadoc.addDeps(ctx)
 
-	if apiCheckEnabled(d.properties.Check_api.Current, "current") {
-		android.ExtractSourceDeps(ctx, d.properties.Check_api.Current.Api_file)
-		android.ExtractSourceDeps(ctx, d.properties.Check_api.Current.Removed_api_file)
-	}
-
-	if apiCheckEnabled(d.properties.Check_api.Last_released, "last_released") {
-		android.ExtractSourceDeps(ctx, d.properties.Check_api.Last_released.Api_file)
-		android.ExtractSourceDeps(ctx, d.properties.Check_api.Last_released.Removed_api_file)
-	}
-
-	if String(d.properties.Previous_api) != "" {
-		android.ExtractSourceDeps(ctx, d.properties.Previous_api)
+	if Bool(d.properties.Check_api.Ignore_missing_latest_api) {
+		ignoreMissingModules(ctx, &d.properties.Check_api.Last_released)
 	}
 
 	if len(d.properties.Merge_annotations_dirs) != 0 {
@@ -1307,13 +1299,6 @@ func (d *Droidstubs) DepsMutator(ctx android.BottomUpMutatorContext) {
 		for _, mergeInclusionAnnotationsDir := range d.properties.Merge_inclusion_annotations_dirs {
 			ctx.AddDependency(ctx.Module(), metalavaMergeInclusionAnnotationsDirTag, mergeInclusionAnnotationsDir)
 		}
-	}
-
-	if String(d.properties.Validate_nullability_from_list) != "" {
-		android.ExtractSourceDeps(ctx, d.properties.Validate_nullability_from_list)
-	}
-	if String(d.properties.Check_nullability_warnings) != "" {
-		android.ExtractSourceDeps(ctx, d.properties.Check_nullability_warnings)
 	}
 
 	if len(d.properties.Api_levels_annotations_dirs) != 0 {
@@ -1430,12 +1415,12 @@ func (d *Droidstubs) collectAnnotationsFlags(ctx android.ModuleContext,
 				"has to be non-empty if annotations was enabled (unless validating nullability)")
 		}
 		if migratingNullability {
-			previousApi := ctx.ExpandSource(String(d.properties.Previous_api), "previous_api")
+			previousApi := android.PathForModuleSrc(ctx, String(d.properties.Previous_api))
 			*implicits = append(*implicits, previousApi)
 			flags += " --migrate-nullness " + previousApi.String()
 		}
 		if s := String(d.properties.Validate_nullability_from_list); s != "" {
-			flags += " --validate-nullability-from-list " + ctx.ExpandSource(s, "validate_nullability_from_list").String()
+			flags += " --validate-nullability-from-list " + android.PathForModuleSrc(ctx, s).String()
 		}
 		if validatingNullability {
 			d.nullabilityWarningsFile = android.PathForModuleOut(ctx, ctx.ModuleName()+"_nullability_warnings.txt")
@@ -1806,9 +1791,9 @@ func ExportedDroiddocDirFactory() android.Module {
 func (d *ExportedDroiddocDir) DepsMutator(android.BottomUpMutatorContext) {}
 
 func (d *ExportedDroiddocDir) GenerateAndroidBuildActions(ctx android.ModuleContext) {
-	path := android.PathForModuleSrc(ctx, String(d.properties.Path))
-	d.dir = path
-	d.deps = ctx.Glob(path.Join(ctx, "**/*").String(), nil)
+	path := String(d.properties.Path)
+	d.dir = android.PathForModuleSrc(ctx, path)
+	d.deps = android.PathsForModuleSrc(ctx, []string{filepath.Join(path, "**/*")})
 }
 
 //

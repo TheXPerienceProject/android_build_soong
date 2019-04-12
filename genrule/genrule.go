@@ -16,6 +16,7 @@ package genrule
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/google/blueprint"
@@ -48,8 +49,10 @@ type SourceFileGenerator interface {
 	GeneratedDeps() android.Paths
 }
 
+// Alias for android.HostToolProvider
+// Deprecated: use android.HostToolProvider instead.
 type HostToolProvider interface {
-	HostToolPath() android.OptionalPath
+	android.HostToolProvider
 }
 
 type hostToolDependencyTag struct {
@@ -83,16 +86,16 @@ type generatorProperties struct {
 	Tools []string
 
 	// Local file that is used as the tool
-	Tool_files []string
+	Tool_files []string `android:"path"`
 
 	// List of directories to export generated headers from
 	Export_include_dirs []string
 
 	// list of input files
-	Srcs []string `android:"arch_variant"`
+	Srcs []string `android:"path,arch_variant"`
 
 	// input files to exclude
-	Exclude_srcs []string `android:"arch_variant"`
+	Exclude_srcs []string `android:"path,arch_variant"`
 }
 
 type Module struct {
@@ -115,6 +118,8 @@ type Module struct {
 
 	outputFiles android.Paths
 	outputDeps  android.Paths
+
+	subName string
 }
 
 type taskFunc func(ctx android.ModuleContext, rawCommand string, srcFiles android.Paths) generateTask
@@ -143,8 +148,6 @@ func (g *Module) GeneratedDeps() android.Paths {
 }
 
 func (g *Module) DepsMutator(ctx android.BottomUpMutatorContext) {
-	android.ExtractSourcesDeps(ctx, g.properties.Srcs)
-	android.ExtractSourcesDeps(ctx, g.properties.Tool_files)
 	if g, ok := ctx.Module().(*Module); ok {
 		for _, tool := range g.properties.Tools {
 			tag := hostToolDependencyTag{label: tool}
@@ -159,6 +162,8 @@ func (g *Module) DepsMutator(ctx android.BottomUpMutatorContext) {
 }
 
 func (g *Module) GenerateAndroidBuildActions(ctx android.ModuleContext) {
+	g.subName = ctx.ModuleSubDir()
+
 	if len(g.properties.Export_include_dirs) > 0 {
 		for _, dir := range g.properties.Export_include_dirs {
 			g.exportedIncludeDirs = append(g.exportedIncludeDirs,
@@ -190,7 +195,7 @@ func (g *Module) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 				tool := ctx.OtherModuleName(module)
 				var path android.OptionalPath
 
-				if t, ok := module.(HostToolProvider); ok {
+				if t, ok := module.(android.HostToolProvider); ok {
 					if !t.(android.Module).Enabled() {
 						if ctx.Config().AllowMissingDependencies() {
 							ctx.AddMissingDependencies([]string{tool})
@@ -227,14 +232,14 @@ func (g *Module) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 	}
 
 	for _, toolFile := range g.properties.Tool_files {
-		paths := ctx.ExpandSources([]string{toolFile}, nil)
+		paths := android.PathsForModuleSrc(ctx, []string{toolFile})
 		g.deps = append(g.deps, paths...)
 		addLocationLabel(toolFile, paths.Strings())
 	}
 
 	var srcFiles android.Paths
 	for _, in := range g.properties.Srcs {
-		paths := ctx.ExpandSources([]string{in}, g.properties.Exclude_srcs)
+		paths := android.PathsForModuleSrcExcludes(ctx, []string{in}, g.properties.Exclude_srcs)
 		srcFiles = append(srcFiles, paths...)
 		addLocationLabel(in, paths.Strings())
 	}
@@ -402,6 +407,27 @@ func (g *Module) IDEInfo(dpInfo *android.IdeInfo) {
 	}
 }
 
+func (g *Module) AndroidMk() android.AndroidMkData {
+	return android.AndroidMkData{
+		Include:    "$(BUILD_PHONY_PACKAGE)",
+		Class:      "FAKE",
+		OutputFile: android.OptionalPathForPath(g.outputFiles[0]),
+		SubName:    g.subName,
+		Extra: []android.AndroidMkExtraFunc{
+			func(w io.Writer, outputFile android.Path) {
+				fmt.Fprintln(w, "LOCAL_ADDITIONAL_DEPENDENCIES :=", strings.Join(g.outputFiles.Strings(), " "))
+			},
+		},
+		Custom: func(w io.Writer, name, prefix, moduleDir string, data android.AndroidMkData) {
+			android.WriteAndroidMkData(w, data)
+			if data.SubName != "" {
+				fmt.Fprintln(w, ".PHONY:", name)
+				fmt.Fprintln(w, name, ":", name+g.subName)
+			}
+		},
+	}
+}
+
 func generatorFactory(taskGenerator taskFunc, props ...interface{}) *Module {
 	module := &Module{
 		taskGenerator: taskGenerator,
@@ -453,7 +479,7 @@ func NewGenSrcs() *Module {
 			}
 
 			// escape the command in case for example it contains '#', an odd number of '"', etc
-			command = fmt.Sprintf("bash -c %v", proptools.ShellEscape([]string{command})[0])
+			command = fmt.Sprintf("bash -c %v", proptools.ShellEscape(command))
 			commands = append(commands, command)
 		}
 		fullCommand := strings.Join(commands, " && ")

@@ -38,7 +38,9 @@ type syspropLibraryProperties struct {
 	// Determine who owns this sysprop library. Possible values are
 	// "Platform", "Vendor", or "Odm"
 	Property_owner string
-	Api_packages   []string
+
+	// list of package names that will be documented and publicized as API
+	Api_packages []string
 }
 
 type commonProperties struct {
@@ -80,7 +82,11 @@ func syspropLibraryFactory() android.Module {
 }
 
 func syspropLibraryHook(ctx android.LoadHookContext, m *syspropLibrary) {
-	if m.syspropLibraryProperties.Api_packages == nil {
+	if len(m.commonProperties.Srcs) == 0 {
+		ctx.PropertyErrorf("srcs", "sysprop_library must specify srcs")
+	}
+
+	if len(m.syspropLibraryProperties.Api_packages) == 0 {
 		ctx.PropertyErrorf("api_packages", "sysprop_library must specify api_packages")
 	}
 

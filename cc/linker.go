@@ -149,7 +149,7 @@ type BaseLinkerProperties struct {
 	Pack_relocations *bool `android:"arch_variant"`
 
 	// local file name to pass to the linker as --version_script
-	Version_script *string `android:"arch_variant"`
+	Version_script *string `android:"path,arch_variant"`
 
 	// Local file name to pass to the linker as --symbol-ordering-file
 	Symbol_ordering_file *string `android:"arch_variant"`
@@ -255,6 +255,17 @@ func (linker *baseLinker) linkerDeps(ctx DepsContext, deps Deps) Deps {
 			}
 		}
 
+		if inList("libc_scudo", deps.SharedLibs) {
+			// libc_scudo is an alternate implementation of all
+			// allocation functions (malloc, free), that uses
+			// the scudo allocator instead of the default native
+			// allocator. If this library is in the list, make
+			// sure it's first so it properly overrides the
+			// allocation functions of all other shared libraries.
+			_, deps.SharedLibs = removeFromList("libc_scudo", deps.SharedLibs)
+			deps.SharedLibs = append([]string{"libc_scudo"}, deps.SharedLibs...)
+		}
+
 		// If libc and libdl are both in system_shared_libs make sure libdl comes after libc
 		// to avoid loading libdl before libc.
 		if inList("libdl", systemSharedLibs) && inList("libc", systemSharedLibs) &&
@@ -280,16 +291,6 @@ func (linker *baseLinker) linkerDeps(ctx DepsContext, deps Deps) Deps {
 	if ctx.Windows() {
 		deps.LateStaticLibs = append(deps.LateStaticLibs, "libwinpthread")
 	}
-
-	// Version_script is not needed when linking stubs lib where the version
-	// script is created from the symbol map file.
-	if !linker.dynamicProperties.BuildStubs {
-		android.ExtractSourceDeps(ctx, linker.Properties.Version_script)
-		android.ExtractSourceDeps(ctx,
-			linker.Properties.Target.Vendor.Version_script)
-	}
-
-	android.ExtractSourceDeps(ctx, linker.Properties.Symbol_ordering_file)
 
 	return deps
 }
@@ -392,7 +393,7 @@ func (linker *baseLinker) linkerFlags(ctx ModuleContext, flags Flags) Flags {
 
 	CheckBadLinkerFlags(ctx, "ldflags", linker.Properties.Ldflags)
 
-	flags.LdFlags = append(flags.LdFlags, proptools.NinjaAndShellEscape(linker.Properties.Ldflags)...)
+	flags.LdFlags = append(flags.LdFlags, proptools.NinjaAndShellEscapeList(linker.Properties.Ldflags)...)
 
 	if ctx.Host() {
 		rpath_prefix := `\$$ORIGIN/`
