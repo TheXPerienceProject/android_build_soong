@@ -39,6 +39,9 @@ func (library *Library) AndroidMkHostDex(w io.Writer, name string, data android.
 		fmt.Fprintln(w, "LOCAL_SOONG_HEADER_JAR :=", library.headerJarFile.String())
 		fmt.Fprintln(w, "LOCAL_SOONG_CLASSES_JAR :=", library.implementationAndResourcesJar.String())
 		fmt.Fprintln(w, "LOCAL_REQUIRED_MODULES := "+strings.Join(data.Required, " "))
+		if r := library.deviceProperties.Target.Hostdex.Required; len(r) > 0 {
+			fmt.Fprintln(w, "LOCAL_REQUIRED_MODULES +=", strings.Join(r, " "))
+		}
 		fmt.Fprintln(w, "include $(BUILD_SYSTEM)/soong_java_prebuilt.mk")
 	}
 }
@@ -77,6 +80,10 @@ func (library *Library) AndroidMk() android.AndroidMkData {
 
 				if len(library.exportedSdkLibs) != 0 {
 					fmt.Fprintln(w, "LOCAL_EXPORT_SDK_LIBRARIES :=", strings.Join(library.exportedSdkLibs, " "))
+				}
+
+				if len(library.additionalCheckedModules) != 0 {
+					fmt.Fprintln(w, "LOCAL_ADDITIONAL_CHECKED_MODULE +=", strings.Join(library.additionalCheckedModules.Strings(), " "))
 				}
 
 				// Temporary hack: export sources used to compile framework.jar to Make

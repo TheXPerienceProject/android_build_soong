@@ -32,6 +32,7 @@ type GlobalConfig struct {
 	OnlyPreoptBootImageAndSystemServer bool // only preopt jars in the boot image or system server
 
 	GenerateApexImage bool // generate an extra boot image only containing jars from the runtime apex
+	UseApexImage      bool // use the apex image by default
 
 	HasSystemOther        bool     // store odex files that match PatternsOnSystemOther on the system_other partition
 	PatternsOnSystemOther []string // patterns (using '%' to denote a prefix match) to put odex on the system_other partition
@@ -58,6 +59,7 @@ type GlobalConfig struct {
 	NeverAllowStripping bool // whether stripping should not be done - used as build time check to make sure dex files are always available
 
 	NoDebugInfo                 bool // don't generate debug info by default
+	DontResolveStartupStrings   bool // don't resolve string literals loaded during application startup.
 	AlwaysSystemServerDebugInfo bool // always generate mini debug info for system server modules (overrides NoDebugInfo=true)
 	NeverSystemServerDebugInfo  bool // never generate mini debug info for system server modules (overrides NoDebugInfo=false)
 	AlwaysOtherDebugInfo        bool // always generate mini debug info for non-system server modules (overrides NoDebugInfo=true)
@@ -300,6 +302,7 @@ func GlobalConfigForTests(ctx android.PathContext) GlobalConfig {
 		GenerateDMFiles:                    false,
 		NeverAllowStripping:                false,
 		NoDebugInfo:                        false,
+		DontResolveStartupStrings:          false,
 		AlwaysSystemServerDebugInfo:        false,
 		NeverSystemServerDebugInfo:         false,
 		AlwaysOtherDebugInfo:               false,
