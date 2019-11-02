@@ -1154,7 +1154,6 @@ func TestUncompressDex(t *testing.T) {
 		})
 	}
 }
-*/
 
 func TestAndroidAppImport(t *testing.T) {
 	ctx := testJava(t, `
@@ -1184,6 +1183,7 @@ func TestAndroidAppImport(t *testing.T) {
 		t.Errorf("Incorrect signing flags, expected: %q, got: %q", expected, signingFlag)
 	}
 }
+*/
 
 func TestAndroidAppImport_NoDexPreopt(t *testing.T) {
 	ctx := testJava(t, `
@@ -1240,6 +1240,7 @@ func TestAndroidAppImport_Presigned(t *testing.T) {
 	}
 }
 
+/*
 func TestAndroidAppImport_DefaultDevCert(t *testing.T) {
 	ctx := testJava(t, `
 		android_app_import {
@@ -1268,6 +1269,7 @@ func TestAndroidAppImport_DefaultDevCert(t *testing.T) {
 		t.Errorf("Incorrect signing flags, expected: %q, got: %q", expected, signingFlag)
 	}
 }
+*/
 
 /*
 func TestAndroidAppImport_DpiVariants(t *testing.T) {
