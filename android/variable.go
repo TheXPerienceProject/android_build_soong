@@ -120,9 +120,6 @@ type variableProperties struct {
 			Srcs         []string
 		}
 
-		// include xperience variables
-		Xperience android.Product_variables
-
 		Flatten_apex struct {
 			Enabled *bool
 		}
@@ -164,6 +161,9 @@ type variableProperties struct {
 		Device_support_hwfde_perf struct {
 			Cflags []string
 		}
+
+               // Include XPerience Variables
+               Xperience android.Product_variables
 	} `android:"arch_variant"`
 }
 
