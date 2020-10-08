@@ -110,6 +110,9 @@ var Configuration = map[string]PathConfig{
 	"zip":         Allowed,
 	"repo":	       Allowed,
         "cpio":        Allowed,
+	"python3":        Allowed,
+	"python3.6":      Allowed,
+	"python3.8":      Allowed,
 
 	// Host toolchain is removed. In-tree toolchain should be used instead.
 	// GCC also can't find cc1 with this implementation.
