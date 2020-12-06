@@ -2029,15 +2029,6 @@ func (module *SdkLibraryImport) JacocoReportClassesFile() android.Path {
 }
 
 // to satisfy apex.javaDependency interface
-func (module *SdkLibraryImport) LintDepSets() LintDepSets {
-	if module.implLibraryModule == nil {
-		return LintDepSets{}
-	} else {
-		return module.implLibraryModule.LintDepSets()
-	}
-}
-
-// to satisfy apex.javaDependency interface
 func (module *SdkLibraryImport) Stem() string {
 	return module.BaseModuleName()
 }
