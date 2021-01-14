@@ -237,7 +237,7 @@ func PrebuiltSelectModuleMutator(ctx TopDownMutatorContext) {
 			p := m.(PrebuiltInterface).Prebuilt()
 			if p.usePrebuilt(ctx, s) {
 				p.properties.UsePrebuilt = true
-				s.SkipInstall()
+				s.ReplacedByPrebuilt()
 			}
 		})
 	}
