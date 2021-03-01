@@ -82,6 +82,8 @@ var Configuration = map[string]PathConfig{
 	"aarch64-linux-android-objdump": Log,
 	"bash":    Allowed,
 	"cpio":    Allowed,
+	"curl":    Allowed,
+	"date":    Allowed,
 	"dd":      Allowed,
 	"diff":    Allowed,
 	"dlv":     Allowed,
