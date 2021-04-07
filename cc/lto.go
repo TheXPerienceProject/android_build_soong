@@ -68,7 +68,7 @@ func (lto *lto) props() []interface{} {
 func (lto *lto) begin(ctx BaseModuleContext) {
 	if ctx.Config().IsEnvTrue("DISABLE_LTO") {
 		lto.Properties.Lto.Never = boolPtr(true)
-	} else if !ctx.Config().IsEnvTrue("DISABLE_GLOBAL_THINLTO") {
+	} else if ctx.Config().IsEnvTrue("GLOBAL_THINLTO") {
 		staticLib := ctx.static() && !ctx.staticBinary()
 		hostBin := ctx.Host()
 		if !staticLib && !hostBin {
