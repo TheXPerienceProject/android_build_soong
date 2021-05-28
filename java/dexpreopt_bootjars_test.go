@@ -53,8 +53,6 @@ func TestDexpreoptBootJars(t *testing.T) {
 
 	ctx := testContext()
 
-	ctx.PreArchMutators(android.RegisterBootJarMutators)
-
 	RegisterDexpreoptBootJarsComponents(ctx)
 
 	run(t, ctx, config)
