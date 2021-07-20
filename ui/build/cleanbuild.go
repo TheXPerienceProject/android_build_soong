@@ -137,6 +137,7 @@ func installClean(ctx Context, config Config) {
 		productOut("build_fingerprint.txt"),
 		productOut("kernel"),
 		productOut("kernel-*"),
+		productOut("recovery_kernel"),
 		productOut("data"),
 		productOut("skin"),
 		productOut("obj/DTB_OBJ"),
