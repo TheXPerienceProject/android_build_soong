@@ -265,7 +265,6 @@ type productVariables struct {
 	MemtagHeapSyncIncludePaths  []string `json:",omitempty"`
 
 	VendorPath    *string `json:",omitempty"`
-	VendorOverlayPath   *string `json:",omitempty"`
 	OdmPath       *string `json:",omitempty"`
 	ProductPath   *string `json:",omitempty"`
 	SystemExtPath *string `json:",omitempty"`
