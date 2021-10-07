@@ -984,18 +984,10 @@ func pathForSource(ctx PathContext, pathComponents ...string) (SourcePath, error
 // It differs from pathForSource in that the path is allowed to exist outside of the PathContext.
 func pathForSourceRelaxed(ctx PathContext, pathComponents ...string) (SourcePath, error) {
 	p := filepath.Join(pathComponents...)
-	ret := SourcePath{basePath{p, ctx.Config(), ""}}
+	ret := SourcePath{basePath{p, ""}, "."}
 
-	abs, err := filepath.Abs(ret.String())
-	if err != nil {
-		return ret, err
-	}
-	buildroot, err := filepath.Abs(ctx.Config().buildDir)
-	if err != nil {
-		return ret, err
-	}
-	if strings.HasPrefix(abs, buildroot) {
-		return ret, fmt.Errorf("source path %s is in output", abs)
+	if strings.HasPrefix(ret.String(), ctx.Config().buildDir) {
+		return ret, fmt.Errorf("source path %s is in output", ret.String())
 	}
 
 	if pathtools.IsGlob(ret.String()) {
@@ -1077,9 +1069,9 @@ func PathForSourceRelaxed(ctx PathContext, pathComponents ...string) SourcePath 
 			modCtx.AddMissingDependencies([]string{path.String()})
 		}
 	} else if exists, _, err := ctx.Config().fs.Exists(path.String()); err != nil {
-		reportPathErrorf(ctx, "%s: %s", path, err.Error())
+		ReportPathErrorf(ctx, "%s: %s", path, err.Error())
 	} else if !exists {
-		reportPathErrorf(ctx, "source path %s does not exist", path)
+		ReportPathErrorf(ctx, "source path %s does not exist", path)
 	}
 	return path
 }
