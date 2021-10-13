@@ -117,6 +117,8 @@ var Configuration = map[string]PathConfig{
 	"ccache":         Allowed,
 	"brotli":         Allowed,
 	"nproc":          Allowed,
+	"ld.lld":  Allowed,
+	"llvm-ar": Allowed,
 	"perl":    Allowed,
 	"arm-linux-androidkernel-as": Allowed,
 	"arm-linux-androidkernel-ld": Allowed,
