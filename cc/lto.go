@@ -18,6 +18,8 @@ import (
 	"github.com/google/blueprint/proptools"
 
 	"android/soong/android"
+	"android/soong/cc/config"
+	"strings"
 )
 
 // LTO (link-time optimization) allows the compiler to optimize and generate
@@ -92,7 +94,13 @@ func (lto *lto) flags(ctx BaseModuleContext, flags Flags) Flags {
 		var ltoCFlag string
 		var ltoLdFlag string
 		if lto.ThinLTO() {
-			ltoCFlag = "-flto=thin -fsplit-lto-unit"
+			// TODO(b/129607781) sdclang does not currently support
+			// the "-fsplit-lto-unit" option
+			if flags.Sdclang && !strings.Contains(config.SDClangPath, "9.0") {
+				ltoCFlag = "-flto=thin"
+			} else {
+				ltoCFlag = "-flto=thin -fsplit-lto-unit"
+			}
 		} else if lto.FullLTO() {
 			ltoCFlag = "-flto"
 		} else {

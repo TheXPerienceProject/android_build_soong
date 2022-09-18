@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"strconv"
 	"sync"
 
 	"android/soong/android"
@@ -71,6 +72,8 @@ func (c *notOnHostContext) Host() bool {
 }
 
 func makeVarsProvider(ctx android.MakeVarsContext) {
+	sdclangMakeVars(ctx)
+
 	ctx.Strict("LLVM_RELEASE_VERSION", "${config.ClangShortVersion}")
 	ctx.Strict("LLVM_PREBUILTS_VERSION", "${config.ClangVersion}")
 	ctx.Strict("LLVM_PREBUILTS_BASE", "${config.ClangBase}")
@@ -177,6 +180,17 @@ func makeVarsProvider(ctx android.MakeVarsContext) {
 	if len(deviceTargets) > 1 {
 		makeVarsToolchain(ctx, "2ND_", deviceTargets[1])
 	}
+}
+
+func sdclangMakeVars(ctx android.MakeVarsContext) {
+	if config.ForceSDClangOff {
+		ctx.Strict("FORCE_SDCLANG_OFF", strconv.FormatBool(config.ForceSDClangOff))
+	}
+	if config.SDClang {
+		ctx.Strict("SDCLANG", strconv.FormatBool(config.SDClang))
+	}
+	ctx.Strict("SDCLANG_PATH", "${config.SDClangBin}")
+	ctx.Strict("SDCLANG_COMMON_FLAGS", "${config.SDClangFlags}")
 }
 
 func makeVarsToolchain(ctx android.MakeVarsContext, secondPrefix string,
@@ -304,10 +318,17 @@ func makeVarsToolchain(ctx android.MakeVarsContext, secondPrefix string,
 		ctx.Strict(makePrefix+"OTOOL", "${config.MacToolPath}/otool")
 		ctx.Strict(makePrefix+"STRIP", "${config.MacStripPath}")
 	} else {
-		ctx.Strict(makePrefix+"AR", "${config.ClangBin}/llvm-ar")
-		ctx.Strict(makePrefix+"READELF", "${config.ClangBin}/llvm-readelf")
-		ctx.Strict(makePrefix+"NM", "${config.ClangBin}/llvm-nm")
-		ctx.Strict(makePrefix+"STRIP", "${config.ClangBin}/llvm-strip")
+		if config.SDClang {
+			ctx.Strict(makePrefix+"AR", "${config.SDClangBin}/llvm-ar")
+			ctx.Strict(makePrefix+"READELF", "${config.SDClangBin}/llvm-readelf")
+			ctx.Strict(makePrefix+"NM", "${config.SDClangBin}/llvm-nm")
+			ctx.Strict(makePrefix+"STRIP", "${config.SDClangBin}/llvm-strip")
+		} else {
+			ctx.Strict(makePrefix+"AR", "${config.ClangBin}/llvm-ar")
+			ctx.Strict(makePrefix+"READELF", "${config.ClangBin}/llvm-readelf")
+			ctx.Strict(makePrefix+"NM", "${config.ClangBin}/llvm-nm")
+			ctx.Strict(makePrefix+"STRIP", "${config.ClangBin}/llvm-strip")
+		}
 	}
 
 	if target.Os.Class == android.Device {

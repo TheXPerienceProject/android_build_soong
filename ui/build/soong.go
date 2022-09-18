@@ -461,6 +461,17 @@ func runSoong(ctx Context, config Config) {
 		// root of the source tree and the output root
 		ninjaEnv.Set("TOP", os.Getenv("TOP"))
 
+		qcEnvVars := []string{
+			"TARGET_BOARD_PLATFORM",
+			"SDCLANG_AE_CONFIG",
+			"SDCLANG_CONFIG",
+			"SDCLANG_SA_ENABLED",
+			"QIIFA_BUILD_CONFIG",
+		}
+		for _, qcVar := range qcEnvVars {
+			ninjaEnv.Set(qcVar, os.Getenv(qcVar))
+		}
+
 		cmd.Environment = &ninjaEnv
 		cmd.Sandbox = soongSandbox
 		cmd.RunAndStreamOrFatal()

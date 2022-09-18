@@ -15,7 +15,12 @@
 package config
 
 import (
+	"encoding/json"
+	"fmt"
+	"os"
+
 	"runtime"
+	"strconv"
 	"strings"
 
 	"android/soong/android"
@@ -199,7 +204,9 @@ var (
 		"-Wno-void-pointer-to-int-cast",
 		// http://b/161386391 for -Wno-pointer-to-int-cast
 		"-Wno-pointer-to-int-cast",
-		"-Werror=fortify-source",
+		// SDClang does not support -Werror=fortify-source.
+		// TODO: b/142476859
+		// "-Werror=fortify-source",
 
 		"-Werror=address-of-temporary",
 		// Bug: http://b/29823425 Disable -Wnull-dereference until the
@@ -283,6 +290,10 @@ var (
 	CppStdVersion             = "gnu++17"
 	ExperimentalCStdVersion   = "gnu11"
 	ExperimentalCppStdVersion = "gnu++2a"
+
+	SDClang         = false
+	SDClangPath     = ""
+	ForceSDClangOff = false
 
 	// prebuilts/clang default settings.
 	ClangDefaultBase         = "prebuilts/clang/host"
@@ -388,6 +399,8 @@ func init() {
 	exportedVars.ExportStringList("CommonGlobalIncludes", commonGlobalIncludes)
 	pctx.PrefixedExistentPathsForSourcesVariable("CommonGlobalIncludes", "-I", commonGlobalIncludes)
 
+	setSdclangVars()
+
 	exportedVars.ExportStringStaticVariable("CLANG_DEFAULT_VERSION", ClangDefaultVersion)
 	exportedVars.ExportStringStaticVariable("CLANG_DEFAULT_SHORT_VERSION", ClangDefaultShortVersion)
 
@@ -427,6 +440,154 @@ func init() {
 	pctx.StaticVariableWithEnvOverride("REClangTidyExecStrategy", "RBE_CLANG_TIDY_EXEC_STRATEGY", remoteexec.LocalExecStrategy)
 	pctx.StaticVariableWithEnvOverride("REAbiDumperExecStrategy", "RBE_ABI_DUMPER_EXEC_STRATEGY", remoteexec.LocalExecStrategy)
 	pctx.StaticVariableWithEnvOverride("REAbiLinkerExecStrategy", "RBE_ABI_LINKER_EXEC_STRATEGY", remoteexec.LocalExecStrategy)
+}
+
+func setSdclangVars() {
+	sdclangPath := ""
+	sdclangAEFlag := ""
+	sdclangFlags := ""
+
+	product := os.Getenv("TARGET_BOARD_PLATFORM")
+	aeConfigPath := os.Getenv("SDCLANG_AE_CONFIG")
+	sdclangConfigPath := os.Getenv("SDCLANG_CONFIG")
+	sdclangSA := os.Getenv("SDCLANG_SA_ENABLED")
+
+	// Bail out if SDCLANG_CONFIG isn't set
+	if sdclangConfigPath == "" {
+		return
+	}
+
+	type sdclangAEConfig struct {
+		SDCLANG_AE_FLAG string
+	}
+
+	// Load AE config file and set AE flag
+	if file, err := os.Open(aeConfigPath); err == nil {
+		decoder := json.NewDecoder(file)
+		aeConfig := sdclangAEConfig{}
+		if err := decoder.Decode(&aeConfig); err == nil {
+			sdclangAEFlag = aeConfig.SDCLANG_AE_FLAG
+		} else {
+			panic(err)
+		}
+	}
+
+	// Load SD Clang config file and set SD Clang variables
+	var sdclangConfig interface{}
+	if file, err := os.Open(sdclangConfigPath); err == nil {
+		decoder := json.NewDecoder(file)
+		// Parse the config file
+		if err := decoder.Decode(&sdclangConfig); err == nil {
+			config := sdclangConfig.(map[string]interface{})
+			// Retrieve the default block
+			if dev, ok := config["default"]; ok {
+				devConfig := dev.(map[string]interface{})
+				// FORCE_SDCLANG_OFF is required in the default block
+				if _, ok := devConfig["FORCE_SDCLANG_OFF"]; ok {
+					ForceSDClangOff = devConfig["FORCE_SDCLANG_OFF"].(bool)
+				}
+				// SDCLANG is optional in the default block
+				if _, ok := devConfig["SDCLANG"]; ok {
+					SDClang = devConfig["SDCLANG"].(bool)
+				}
+				// SDCLANG_PATH is required in the default block
+				if _, ok := devConfig["SDCLANG_PATH"]; ok {
+					sdclangPath = devConfig["SDCLANG_PATH"].(string)
+				} else {
+					panic("SDCLANG_PATH is required in the default block")
+				}
+				// SDCLANG_FLAGS is optional in the default block
+				if _, ok := devConfig["SDCLANG_FLAGS"]; ok {
+					sdclangFlags = devConfig["SDCLANG_FLAGS"].(string)
+				}
+			} else {
+				panic("Default block is required in the SD Clang config file")
+			}
+			// Retrieve the device specific block if it exists in the config file
+			if dev, ok := config[product]; ok {
+				devConfig := dev.(map[string]interface{})
+				// SDCLANG is optional in the device specific block
+				if _, ok := devConfig["SDCLANG"]; ok {
+					SDClang = devConfig["SDCLANG"].(bool)
+				}
+				// SDCLANG_PATH is optional in the device specific block
+				if _, ok := devConfig["SDCLANG_PATH"]; ok {
+					sdclangPath = devConfig["SDCLANG_PATH"].(string)
+				}
+				// SDCLANG_FLAGS is optional in the device specific block
+				if _, ok := devConfig["SDCLANG_FLAGS"]; ok {
+					sdclangFlags = devConfig["SDCLANG_FLAGS"].(string)
+				}
+			}
+			b, _ := strconv.ParseBool(sdclangSA)
+			if b {
+				llvmsa_loc := "llvmsa"
+				s := []string{sdclangFlags, "--compile-and-analyze", llvmsa_loc}
+				sdclangFlags = strings.Join(s, " ")
+				fmt.Println("Clang SA is enabled: ", sdclangFlags)
+			} else {
+				fmt.Println("Clang SA is not enabled")
+			}
+		} else {
+			panic(err)
+		}
+	} else {
+		fmt.Println(err)
+	}
+
+	// Override SDCLANG if the varialbe is set in the environment
+	if sdclang := os.Getenv("SDCLANG"); sdclang != "" {
+		if override, err := strconv.ParseBool(sdclang); err == nil {
+			SDClang = override
+		}
+	}
+
+	// Sanity check SDCLANG_PATH
+	if envPath := os.Getenv("SDCLANG_PATH"); SDClang && sdclangPath == "" && envPath == "" {
+		panic("SDCLANG_PATH can not be empty")
+	}
+
+	// Override SDCLANG_PATH if the variable is set in the environment
+	pctx.VariableFunc("SDClangBin", func(ctx android.PackageVarContext) string {
+		if override := ctx.Config().Getenv("SDCLANG_PATH"); override != "" {
+			return override
+		}
+		return sdclangPath
+	})
+
+	// Override SDCLANG_COMMON_FLAGS if the variable is set in the environment
+	pctx.VariableFunc("SDClangFlags", func(ctx android.PackageVarContext) string {
+		if override := ctx.Config().Getenv("SDCLANG_COMMON_FLAGS"); override != "" {
+			return override
+		}
+		return sdclangAEFlag + " " + sdclangFlags
+	})
+
+	SDClangPath = sdclangPath
+	// Find the path to SDLLVM's ASan libraries
+	// TODO (b/117846004): Disable setting SDClangAsanLibDir due to unit test path issues
+	//absPath := sdclangPath
+	//if envPath := android.SdclangEnv["SDCLANG_PATH"]; envPath != "" {
+	//	absPath = envPath
+	//}
+	//if !filepath.IsAbs(absPath) {
+	//	absPath = path.Join(androidRoot, absPath)
+	//}
+	//
+	//libDirPrefix := "../lib/clang"
+	//libDir, err := ioutil.ReadDir(path.Join(absPath, libDirPrefix))
+	//if err != nil {
+	//	libDirPrefix = "../lib64/clang"
+	//	libDir, err = ioutil.ReadDir(path.Join(absPath, libDirPrefix))
+	//}
+	//if err != nil {
+	//	panic(err)
+	//}
+	//if len(libDir) != 1 || !libDir[0].IsDir() {
+	//	panic("Failed to find sanitizer libraries")
+	//}
+	//
+	//pctx.StaticVariable("SDClangAsanLibDir", path.Join(absPath, libDirPrefix, libDir[0].Name(), "lib/linux"))
 }
 
 var HostPrebuiltTag = exportedVars.ExportVariableConfigMethod("HostPrebuiltTag", android.Config.PrebuiltOS)
