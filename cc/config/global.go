@@ -453,9 +453,9 @@ func setSdclangVars() {
 	sdclangSA := os.Getenv("SDCLANG_SA_ENABLED")
 
 	// Bail out if SDCLANG_CONFIG isn't set
-	if sdclangConfigPath == "" {
-		return
-	}
+	//if sdclangConfigPath == "" {
+	//	return
+	//}
 
 	type sdclangAEConfig struct {
 		SDCLANG_AE_FLAG string
