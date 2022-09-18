@@ -466,7 +466,7 @@ func runSoong(ctx Context, config Config) {
 			"SDCLANG_AE_CONFIG",
 			"SDCLANG_CONFIG",
 			"SDCLANG_SA_ENABLED",
-			"QIIFA_BUILD_CONFIG",
+			// "QIIFA_BUILD_CONFIG",
 		}
 		for _, qcVar := range qcEnvVars {
 			ninjaEnv.Set(qcVar, os.Getenv(qcVar))

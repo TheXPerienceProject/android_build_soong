@@ -292,7 +292,7 @@ var (
 	ExperimentalCppStdVersion = "gnu++2a"
 
 	SDClang         = false
-	SDClangPath     = ""
+	SDClangPath     = "vendor/qcom/sdclang/compiler/bin"
 	ForceSDClangOff = false
 
 	// prebuilts/clang default settings.
