@@ -117,6 +117,7 @@ var Configuration = map[string]PathConfig{
 	"ccache":         Allowed,
 	"brotli":         Allowed,
 	"nproc":          Allowed,
+	"aarch64-linux-gnu-ld":    Allowed,
 	"llvm-addr2line":  Allowed,
 	"ld.lld":  Allowed,
 	"llvm-ar": Allowed,
