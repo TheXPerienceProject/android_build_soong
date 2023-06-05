@@ -19,6 +19,7 @@ var archVariants = map[ArchType][]string{
 		"armv7-a-neon",
 		"armv8-a",
 		"armv8-2a",
+		"armv9-a",
 	},
 	Arm64: {
 		"armv8-a",
@@ -82,6 +83,7 @@ var cpuVariants = map[ArchType][]string{
 		"cortex-a53",
 		"cortex-a53.a57",
 		"cortex-a55",
+		"cortex-a710",
 		"cortex-a72",
 		"cortex-a73",
 		"cortex-a75",
@@ -96,6 +98,7 @@ var cpuVariants = map[ArchType][]string{
 		"cortex-a510",
 		"cortex-a53",
 		"cortex-a55",
+		"cortex-a710",
 		"cortex-a72",
 		"cortex-a73",
 		"cortex-a75",
@@ -151,6 +154,10 @@ var androidArchFeatureMap = map[ArchType]map[string][]string{
 			"neon",
 		},
 		"armv8-2a": {
+			"neon",
+		},
+		"armv9-a": {
+			"aarch32",
 			"neon",
 		},
 	},
