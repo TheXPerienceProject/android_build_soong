@@ -30,6 +30,7 @@ var (
 		"armv7-a-neon": []string{},
 		"armv8-a":      []string{},
 		"armv8-2a":     []string{},
+		"armv9-a":      []string{},
 	}
 )
 

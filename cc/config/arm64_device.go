@@ -44,7 +44,7 @@ var (
 		// On ARMv9 and later, Pointer Authentication Codes (PAC) are mandatory,
 		// so -fstack-protector is unnecessary.
 		"armv9-a": []string{
-			"-march=armv9-a+crypto+nosve",
+			"-march=armv9-a+crypto+nosve+dotprod",
 			"-mbranch-protection=standard",
 			"-fno-stack-protector",
 		},
@@ -83,6 +83,9 @@ var (
 		},
 		"cortex-a55": []string{
 			"-mcpu=cortex-a55",
+		},
+		"cortex-a710": []string{
+			"-mcpu=cortex-a710",
 		},
 		"cortex-a75": []string{
 			"-mcpu=cortex-a75+crypto+crc",
@@ -136,6 +139,7 @@ func init() {
 	pctx.StaticVariable("Arm64CortexA53Cflags", strings.Join(arm64CpuVariantCflags["cortex-a53"], " "))
 	pctx.StaticVariable("Arm64CortexA55Cflags", strings.Join(arm64CpuVariantCflags["cortex-a55"], " "))
 	pctx.StaticVariable("Arm64CortexA76Cflags", strings.Join(arm64CpuVariantCflags["cortex-a76"], " "))
+	pctx.StaticVariable("Arm64CortexA710Cflags", strings.Join(arm64CpuVariantCflags["cortex-a710"], " "))
 	pctx.StaticVariable("Arm64KryoCflags", strings.Join(arm64CpuVariantCflags["kryo"], " "))
 	pctx.StaticVariable("Arm64Kryo385Cflags", strings.Join(arm64CpuVariantCflags["kryo385"], " "))
 	pctx.StaticVariable("Arm64ExynosM1Cflags", strings.Join(arm64CpuVariantCflags["exynos-m1"], " "))
@@ -149,6 +153,7 @@ var (
 		"cortex-a510": "${config.Arm64CortexA510Cflags}",
 		"cortex-a53": "${config.Arm64CortexA53Cflags}",
 		"cortex-a55": "${config.Arm64CortexA55Cflags}",
+		"cortex-a710": "${config.Arm64CortexA710Cflags}",
 		"cortex-a72": "${config.Arm64CortexA53Cflags}",
 		"cortex-a73": "${config.Arm64CortexA53Cflags}",
 		"cortex-a75": "${config.Arm64CortexA55Cflags}",
