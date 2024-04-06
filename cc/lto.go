@@ -113,8 +113,10 @@ func (lto *lto) flags(ctx ModuleContext, flags Flags) Flags {
 		// Do not perform costly LTO optimizations for Eng builds.
 		if Bool(lto.Properties.Lto_O0) || ctx.Config().Eng() {
 			ltoLdFlags = append(ltoLdFlags, "-Wl,--lto-O0")
+		} else {
+			ltoLdFlags = append(ltoLdFlags,"-Wl,--lto-O3")
+			ltoCOnlyFlags = append(ltoCOnlyFlags, "-O3")
 		}
-
 		// Enable Polly globally
 		ltoCOnlyFlags = append(ltoCOnlyFlags, "-mllvm -polly")
 		ltoCOnlyFlags = append(ltoCOnlyFlags, "-mllvm -polly-parallel")
