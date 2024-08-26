@@ -288,6 +288,25 @@ org\.ifaa\.android\.manager.*
 com\.oplus\..*
 
 # QC adds
-com\.qualcomm\.qti
-com\.quicinc\.tcmiface
-qcom\.fmradio
+com.qualcomm.qti
+com.quicinc.tcmiface
+com.qualcomm.wfd
+com.qualcomm.wfd.service
+org.codeaurora.ims
+org.codeaurora.internal
+qcom.fmradio
+
+###################################################
+# ONEPLUS
+com.oplus.*
+net.oneplus.*
+oplus.*
+vendor.oplus.*
+com.oneplus.*
+vendor.oneplus.*
+
+###################################################
+
+# LMODroid adds
+com\.libremobileos.*
+
