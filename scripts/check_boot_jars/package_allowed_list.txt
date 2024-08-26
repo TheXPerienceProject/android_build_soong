@@ -301,3 +301,16 @@ org\.ifaa\.aidl.*
 
 # Nothing
 com\.nothing.*
+
+# ONEPLUS
+com.oplus.*
+net.oneplus.*
+oplus.*
+vendor.oplus.*
+com.oneplus.*
+vendor.oneplus.*
+
+###################################################
+
+# LMODroid adds
+com\.libremobileos.*
