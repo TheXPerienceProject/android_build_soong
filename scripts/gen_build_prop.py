@@ -120,6 +120,8 @@ def parse_args():
 
   override_config(config)
 
+  override_config(config)
+
   append_additional_system_props(args)
   append_additional_vendor_props(args)
   append_additional_product_props(args)
