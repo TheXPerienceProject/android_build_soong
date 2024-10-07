@@ -76,7 +76,8 @@ var (
 
 	arm64CpuVariantCflags = map[string][]string{
 		"cortex-a510": []string{
-			"-mcpu=cortex-a510",
+			// Enable cryptographic extensions
+			"-mcpu=cortex-a510+crypto",
 		},
 		"cortex-a53": []string{
 			"-mcpu=cortex-a53",
@@ -107,7 +108,8 @@ var (
                 },
 		"kryo785": []string{
 			// Disable SVE instructions because Qualcomm disabled SVE in firmware.
-			"-mcpu=cortex-a510+nosve",
+			// Enable cryptographic extensions
+			"-mcpu=cortex-a510+nosve+crypto",
 		},
 		"exynos-m1": []string{
 			"-mcpu=exynos-m1",
