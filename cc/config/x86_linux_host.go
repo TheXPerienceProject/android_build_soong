@@ -41,7 +41,6 @@ var (
 	}
 
 	linuxMuslCflags = []string{
-		"-D_LIBCPP_HAS_MUSL_LIBC",
 		"-DANDROID_HOST_MUSL",
 		"-nostdlibinc",
 		"--sysroot /dev/null",
