@@ -287,22 +287,6 @@ func createLimitNdkExportRule() []Rule {
         }
 }
 
-func createKotlinPluginRule() []Rule {
-	kotlinPluginProjectsAllowedList := []string{
-		// TODO: Migrate compose plugin to the bundled compiler plugin
-		// Actual path prebuilts/sdk/current/androidx/m2repository/androidx/compose/compiler/compiler-hosted
-		"prebuilts/sdk/current/androidx",
-		"external/kotlinc",
-	}
-
-	return []Rule{
-		NeverAllow().
-			NotIn(kotlinPluginProjectsAllowedList...).
-			ModuleType("kotlin_plugin").
-			Because("kotlin_plugin can only be used in allowed projects"),
-	}
-}
-
 func createLimitDirgroupRule() []Rule {
 	reason := "dirgroup module and dir_srcs / keep_gendir property of genrule is allowed only to Trusty build rule."
 	return []Rule{
