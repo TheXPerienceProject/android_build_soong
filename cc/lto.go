@@ -108,34 +108,12 @@ func (lto *lto) flags(ctx ModuleContext, flags Flags) Flags {
 	}
 	if lto.Properties.LtoEnabled {
 		ltoCFlags := []string{"-flto=thin", "-fsplit-lto-unit"}
-		var ltoCOnlyFlags []string
 		var ltoLdFlags []string
 
 		// Do not perform costly LTO optimizations for Eng builds.
 		if Bool(lto.Properties.Lto_O0) || ctx.optimizeForSize() || ctx.Config().Eng() {
 			ltoLdFlags = append(ltoLdFlags, "-Wl,--lto-O0")
-		} else {
-			ltoLdFlags = append(ltoLdFlags,"-Wl,--lto-O3")
-			ltoCOnlyFlags = append(ltoCOnlyFlags, "-O3")
 		}
-
-		// Utilize unified LTO for greater optimization than ThinLTO with a
-		// lesser compile time hit than full lto
-		ltoCFlags = append(ltoCFlags, "-funified-lto")
-
-		// Enable Polly globally
-		ltoCOnlyFlags = append(ltoCOnlyFlags, "-mllvm -polly")
-		ltoCOnlyFlags = append(ltoCOnlyFlags, "-mllvm -polly-parallel")
-		ltoCOnlyFlags = append(ltoCOnlyFlags, "-mllvm -polly-ast-use-context")
-		ltoCOnlyFlags = append(ltoCOnlyFlags, "-mllvm -polly-invariant-load-hoisting")
-		ltoCOnlyFlags = append(ltoCOnlyFlags, "-mllvm -polly-run-inliner")
-		ltoCOnlyFlags = append(ltoCOnlyFlags, "-mllvm -polly-loopfusion-greedy=1")
-		ltoCOnlyFlags = append(ltoCOnlyFlags, "-mllvm -polly-reschedule=1")
-		ltoCOnlyFlags = append(ltoCOnlyFlags, "-mllvm -polly-postopts=1")
-		ltoCOnlyFlags = append(ltoCOnlyFlags, "-mllvm -polly-omp-backend=LLVM")
-		ltoCOnlyFlags = append(ltoCOnlyFlags, "-mllvm -polly-scheduling=dynamic")
-		ltoCOnlyFlags = append(ltoCOnlyFlags, "-mllvm -polly-scheduling-chunksize=1")
-		ltoCOnlyFlags = append(ltoCOnlyFlags, "-mllvm -polly-vectorizer=stripmine")
 
 		if Bool(lto.Properties.Whole_program_vtables) {
 			ltoCFlags = append(ltoCFlags, "-fwhole-program-vtables")
@@ -180,7 +158,6 @@ func (lto *lto) flags(ctx ModuleContext, flags Flags) Flags {
 		flags.Local.AsFlags = append(flags.Local.AsFlags, ltoCFlags...)
 		flags.Local.LdFlags = append(flags.Local.LdFlags, ltoCFlags...)
 		flags.Local.LdFlags = append(flags.Local.LdFlags, ltoLdFlags...)
-		flags.Local.CFlags = append(flags.Local.CFlags, ltoCOnlyFlags...)
 	}
 	return flags
 }
