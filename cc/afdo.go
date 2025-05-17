@@ -101,6 +101,10 @@ func (afdo *afdo) flags(ctx ModuleContext, flags Flags) Flags {
 		// TODO b/308241674 15979038988619404813 - Build Failure for format.o | uncomment this line to fix the build
 		//flags.Local.CFlags = append([]string{"-mllvm", "-improved-fs-discriminator=true"}, flags.Local.CFlags...)
 		flags.Local.LdFlags = append([]string{"-Wl,-mllvm,-improved-fs-discriminator=true"}, flags.Local.LdFlags...)
+		// Given AFDO'd modules are performance sensitive, further optimize them
+		flags.Local.CFlags = append([]string{"-O3"}, flags.Local.CFlags...)
+		flags.Local.LdFlags = append([]string{"-Wl,-O3"}, flags.Local.LdFlags...)
+		flags.Local.LdFlags = append([]string{"-Wl,--lto-O3"}, flags.Local.LdFlags...)
 	}
 	if fdoProfilePath := getFdoProfilePathFromDep(ctx); fdoProfilePath != "" {
 		// The flags are prepended to allow overriding.
