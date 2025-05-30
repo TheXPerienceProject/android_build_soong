@@ -89,6 +89,7 @@ var Configuration = map[string]PathConfig{
 	"bash":        Allowed,
 	"diff":        Allowed,
 	"dlv":         Allowed,
+	"date":         Allowed,
 	"expr":        Allowed,
 	"fuser":       Allowed,
 	"gcert":       Allowed,
