@@ -72,6 +72,9 @@ var (
 
 		// Warnings disabled by default.
 
+		// We should encourage use of C23 features even when the whole project
+		// isn't C23-ready.
+		"-Wno-c23-extensions",
 		// Designated initializer syntax is recommended by the Google C++ style
 		// and is OK to use even if not formally supported by the chosen C++
 		// version.
@@ -236,12 +239,14 @@ var (
 	// opting into the warning.
 	noOverrideGlobalCflags = []string{
 		"-Werror=bool-operation",
+		"-Werror=dangling",
 		"-Werror=format-insufficient-args",
 		"-Werror=implicit-int-float-conversion",
 		"-Werror=int-in-bool-context",
 		"-Werror=int-to-pointer-cast",
 		"-Werror=pointer-to-int-cast",
 		"-Werror=xor-used-as-pow",
+		"-Wimplicit-int-float-conversion",
 		// http://b/161386391 for -Wno-void-pointer-to-enum-cast
 		"-Wno-void-pointer-to-enum-cast",
 		// http://b/161386391 for -Wno-void-pointer-to-int-cast
@@ -294,6 +299,13 @@ var (
 
 		// Allow using VLA CXX extension.
 		"-Wno-vla-cxx-extension",
+		"-Wno-cast-function-type-mismatch",
+
+		// YAAP additions since we will be minimally updating external platform
+		"-Wno-error=deprecated-non-prototype",
+		"-Wno-error=strict-prototypes",
+		"-Wno-error=enum-conversion",
+		"-Wno-error=unused-value",
 	}
 
 	noOverride64GlobalCflags = []string{}
