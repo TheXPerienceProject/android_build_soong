@@ -147,6 +147,11 @@ var (
 
 		// Make paths in deps files relative.
 		"-no-canonical-prefixes",
+
+		// XPerience build fixes
+		"-D_LIBCPP_DISABLE_DEPRECATION_WARNINGS",
+		"-D_LIBCPP_DISABLE_NODISCARD_EXT",
+		"-Wno-parentheses",
 	}
 
 	commonGlobalConlyflags = []string{}
