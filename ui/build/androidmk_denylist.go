@@ -38,8 +38,6 @@ var androidmk_denylist []string = []string{
 	// TODO(b/379468815) re-enable
 	// "external/",
 	"frameworks/",
-	"hardware/google/",
-	"hardware/interfaces/",
 	"hardware/libhardware/",
 	"hardware/libhardware_legacy/",
 	"hardware/ril/",
