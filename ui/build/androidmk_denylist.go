@@ -67,6 +67,8 @@ var androidmk_allowlist []string = []string{
         "external/ant-wireless/ant_service/Android.mk",
         "external/e2fsprogs/Android.mk",
 	"tools/vendor/google_prebuilts/arc/Android.mk",
+	"hardware/qcom-caf/wlan/qcwcn/wifi_hal/Android.mk",
+	"hardware/qcom-caf/wlan/wcnss-service/Android.mk",
 }
 
 func getAllLines(ctx Context, filename string) []string {
