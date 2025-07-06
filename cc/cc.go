@@ -2949,7 +2949,9 @@ func (c *Module) DepsMutator(actx android.BottomUpMutatorContext) {
 						"generated_kernel_headers",
 						"qti_audio_kernel_uapi",
 						"qti_display_kernel_headers",
-						"qti_kernel_headers":
+						"qti_ipa_kernel_headers",
+						"qti_kernel_headers",
+						"smmu_proxy_uapi_header":
 					if (len(ctx.Config().Getenv("TARGET_PREBUILT_KERNEL_HEADERS")) > 0) {
 						newHeaderLibs = append(newHeaderLibs, "prebuilt_kernel_headers")
 						continue
