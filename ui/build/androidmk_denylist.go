@@ -37,7 +37,8 @@ var androidmk_denylist []string = []string{
 	"device/sample/",
 	// TODO(b/379468815) re-enable
 	// "external/",
-	"frameworks/",
+	// allow frameworks for packages
+	//"frameworks/",
 	"hardware/libhardware/",
 	"hardware/libhardware_legacy/",
 	"hardware/ril/",
@@ -66,6 +67,9 @@ var androidmk_allowlist []string = []string{
         "external/ant-wireless/ant_native/Android.mk",
         "external/ant-wireless/ant_service/Android.mk",
         "external/e2fsprogs/Android.mk",
+	"frameworks/base/packages/overlays/IconPackAuroraSystemUIOverlay/Android.mk",
+	"frameworks/base/packages/overlays/IconPackGradiconSystemUIOverlay/Android.mk",
+	"frameworks/base/packages/overlays/*/Android.mk",
 	"tools/vendor/google_prebuilts/arc/Android.mk",
 	"hardware/qcom-caf/wlan/qcwcn/wifi_hal/Android.mk",
 	"hardware/qcom-caf/wlan/wcnss-service/Android.mk",
