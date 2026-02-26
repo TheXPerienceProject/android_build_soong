@@ -250,3 +250,6 @@ org\.ifaa\.aidl.*
 
 # LMODroid adds
 com\.libremobileos.*
+
+# LineageOS packages
+vendor\.lineage.*
