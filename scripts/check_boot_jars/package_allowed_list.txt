@@ -310,3 +310,5 @@ vendor.oneplus.*
 # LMODroid adds
 com\.libremobileos.*
 
+# LineageOS packages
+vendor\.lineage.*
