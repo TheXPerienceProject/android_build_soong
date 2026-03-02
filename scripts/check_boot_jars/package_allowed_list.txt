@@ -231,6 +231,7 @@ net.oneplus.*
 oplus.*
 vendor.oplus.*
 com.oneplus.*
+com\.thundersoft\..*
 vendor.oneplus.*
 
 # QC adds
