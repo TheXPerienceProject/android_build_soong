@@ -35,7 +35,7 @@ var (
 		"armv8-5a":           {"-march=armv8.5-a"},
 		"armv8-7a":           {"-march=armv8.7-a"},
 		"armv9-a":            {"-march=armv9-a+crypto+nosve+dotprod+fp16+i8mm"},
-		"armv9-2a":           {"-march=armv9.2-a"},
+		"armv9-2a":           {"-march=armv9.2-a+crypto+nosve"},
 		"armv9-3a":           {"-march=armv9.3-a"},
 		"armv9-4a":           {"-march=armv9.4-a"},
 	}
