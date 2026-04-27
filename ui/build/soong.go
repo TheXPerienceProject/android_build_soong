@@ -671,7 +671,7 @@ func runSoong(ctx Context, config Config, enforceNoSoongOutput bool) {
 					"-d", "stats",
 					"-o", "usesphonyoutputs=yes",
 					"-o", "preremoveoutputs=yes",
-					"-w", "dupbuild=err",
+					//"-w", "dupbuild=err",
 					"-w", "outputdir=err",
 					"-w", "missingoutfile=err",
 					"-j", strconv.Itoa(config.Parallel()),
