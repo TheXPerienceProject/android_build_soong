@@ -298,6 +298,7 @@ qcom.fmradio
 
 # Xiaomi adds
 com\.xiaomi\..*
+com\.camera\..*
 
 ###################################################
 # ONEPLUS
