@@ -316,3 +316,6 @@ com\.libremobileos.*
 
 # LineageOS packages
 vendor\.lineage.*
+
+# OnePlus Framework
+com\.color\.inner\.view\.*
