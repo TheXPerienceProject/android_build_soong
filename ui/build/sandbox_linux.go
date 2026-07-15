@@ -17,6 +17,8 @@ package build
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"log"
 	"os"
 	"os/exec"
 	"os/user"
@@ -357,6 +359,17 @@ func (c *Cmd) wrapSandbox() {
 		if err == nil {
 			sandboxArgs = append(sandboxArgs, "-B", strings.TrimSpace(string(bytes)))
 		}
+	}
+
+	if tltoCacheDir := os.Getenv("THINLTO_CACHE_DIR"); tltoCacheDir != "" {
+		// make sure tltoCacheDir exists
+		if _, err := os.Stat(tltoCacheDir); errors.Is(err, os.ErrNotExist) {
+			err := os.MkdirAll(tltoCacheDir, os.ModePerm)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+		sandboxArgs = append(sandboxArgs, "-B", tltoCacheDir)
 	}
 
 	// Stop nsjail from parsing arguments

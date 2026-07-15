@@ -15,7 +15,10 @@
 package cc
 
 import (
+	"errors"
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/google/blueprint"
 	"github.com/google/blueprint/proptools"
@@ -121,14 +124,26 @@ func (lto *lto) flags(ctx ModuleContext, flags Flags) Flags {
 
 		if ctx.Config().IsEnvTrue("USE_THINLTO_CACHE") {
 			// Set appropriate ThinLTO cache policy
+			var cacheDir string
 			cacheDirFormat := "-Wl,--thinlto-cache-dir="
-			cacheDir := android.PathForOutput(ctx, "thinlto-cache").String()
+			if tltoCacheDir := ctx.Config().Getenv("THINLTO_CACHE_DIR"); tltoCacheDir != "" {
+				cacheDir = tltoCacheDir
+				// make sure tltoCacheDir exists
+				if _, err := os.Stat(tltoCacheDir); errors.Is(err, os.ErrNotExist) {
+					err := os.MkdirAll(tltoCacheDir, os.ModePerm)
+					if err != nil {
+						log.Println(err)
+					}
+				}
+			} else {
+				cacheDir = android.PathForOutput(ctx, "thinlto-cache").String()
+			}
 			ltoLdFlags = append(ltoLdFlags, cacheDirFormat+cacheDir)
 
 			// Limit the size of the ThinLTO cache to the lesser of 10% of available
 			// disk space and 10GB.
 			cachePolicyFormat := "-Wl,--thinlto-cache-policy="
-			policy := "cache_size=10%:cache_size_bytes=10g"
+			policy := "cache_size=10%:cache_size_bytes=15g"
 			ltoLdFlags = append(ltoLdFlags, cachePolicyFormat+policy)
 		}
 
