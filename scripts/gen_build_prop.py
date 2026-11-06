@@ -263,7 +263,7 @@ def generate_build_info(args):
   # flavor (via a dedicated lunch config for example).
   print(f"ro.build.flavor={config['BuildFlavor']}")
 
-  print(f"ro.xpe.device={config['XperienceDevice']}")
+  print(f"ro.xpe.device?={config['XperienceDevice']}")
 
   # These values are deprecated, use "ro.product.cpu.abilist"
   # instead (see below).
