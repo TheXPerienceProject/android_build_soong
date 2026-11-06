@@ -261,3 +261,6 @@ vendor\.lineage.*
 
 # OnePlus Framework
 com\.color\.inner\.view\.*
+
+# XPerience packages
+mx\.xperience\..*
